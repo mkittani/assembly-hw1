@@ -1,0 +1,98 @@
+.model small
+.8086
+.data
+
+msg7 db 0ah,0dh,"percent = $"
+counter db 0
+
+.code
+
+ percent MACRO x 
+    PUSHA
+     mov di, offset counter
+    mov ax, x     
+    mov dx, ax
+    mov bx,x       
+    mov si, 0
+    mov cx,0        ;int countTotDigits=0
+l1:
+    mov ax, bx
+    cmp ax,0        ;check if ax==0 then jmp to the last loop
+    jz l3
+    mov cx, 10  
+    mov dx, 0
+    div cx 
+    mov bx, ax ; save quotient in bx  
+    mov ax, dx ;remainder in ax      
+    push bx
+    
+    mov bx, 2
+    mov dx, 0
+    div bx
+    cmp dx, 0
+    je count
+    mov ah, 0
+    inc si
+    pop bx
+    jmp l1
+    
+    count:
+    inc [di] 
+    inc si
+    pop bx 
+    jmp l1
+    
+
+
+l3:
+    mov ax,0
+    cmp cx,0        ;if countTotDigits==0 then jmp to exit
+    jz exitALL
+    mov di, offset counter
+    mov bl, [di] 
+    mov al, 100   
+    
+    mul bl
+    mov dx, 0
+    div si          ;countEven/countTotDigits=percent   ax/cx=percent
+    push ax 
+    
+    lea dx,msg7     ;print 
+    mov ah,9
+    int 21h
+    pop ax
+    mov dx, 0
+    mov bx, 10
+    div bx  
+    mov ah,2  
+    push dx  
+    mov dl, al
+    add dl, 30h
+    int 21h 
+            
+    pop dx
+    mov ah,2
+    add dl, 30h
+    int 21h      
+ 
+exitALL:
+    POPA 
+    
+ ENDM
+ ret
+.startup
+
+    mov ax,@data    ;pointing ax on the address of data msgs
+    mov ds,ax  
+    mov ax, 1101
+    percent ax
+    mov ah, 2
+    mov dl, "%"
+    int 21h 
+    jmp exitt    
+    
+exitt:
+ 
+ .exit
+   
+ end
